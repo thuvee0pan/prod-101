@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #0a0a0a;
+  color: #e5e5e5;
+}
+
+@layer components {
+  .card {
+    @apply bg-surface border border-border rounded-lg p-5;
+  }
+
+  .btn-primary {
+    @apply bg-accent hover:bg-accent-dim text-black font-medium px-4 py-2 rounded-md transition-colors;
+  }
+
+  .btn-danger {
+    @apply bg-danger/20 hover:bg-danger/30 text-danger border border-danger/30 font-medium px-4 py-2 rounded-md transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-border hover:bg-muted/30 text-white font-medium px-4 py-2 rounded-md transition-colors;
+  }
+
+  .input {
+    @apply bg-bg border border-border rounded-md px-3 py-2 text-white placeholder-muted focus:outline-none focus:border-accent transition-colors w-full;
+  }
+
+  .label {
+    @apply text-sm text-muted mb-1 block;
+  }
+
+  .streak-fire {
+    @apply text-warning font-bold;
+  }
+}
