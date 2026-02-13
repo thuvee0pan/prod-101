@@ -19,6 +19,7 @@ builder.Services.AddScoped<StreakService>();
 builder.Services.AddScoped<WeeklyReviewService>();
 builder.Services.AddScoped<WarningService>();
 builder.Services.AddScoped<AiService>();
+builder.Services.AddScoped<TodoService>();
 builder.Services.AddHostedService<InactivityDetectionJob>();
 
 builder.Services.AddCors(options =>

@@ -7,6 +7,7 @@ const nav = [
   { href: '/', label: 'Dashboard' },
   { href: '/goals', label: 'Goal' },
   { href: '/projects', label: 'Projects' },
+  { href: '/todos', label: 'Todos' },
   { href: '/daily-log', label: 'Daily Log' },
   { href: '/weekly-review', label: 'Weekly Review' },
 ];

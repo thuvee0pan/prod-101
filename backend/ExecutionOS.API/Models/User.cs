@@ -15,4 +15,5 @@ public class User
     public List<Streak> Streaks { get; set; } = new();
     public List<InactivityWarning> Warnings { get; set; } = new();
     public List<WeeklyReview> WeeklyReviews { get; set; } = new();
+    public List<TodoItem> TodoItems { get; set; } = new();
 }

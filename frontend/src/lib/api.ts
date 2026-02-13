@@ -7,6 +7,7 @@ import type {
   Warning,
   WeeklyReview,
   ProjectChangeResponse,
+  TodoItem,
 } from '@/types/api';
 
 const API_BASE = '/api';
@@ -122,6 +123,36 @@ export const generateWeeklyReview = () =>
 export const getAllReviews = () => request<WeeklyReview[]>('/weekly-reviews');
 
 export const getLatestReview = () => request<WeeklyReview>('/weekly-reviews/latest');
+
+// Todos
+export const createTodo = (data: {
+  title: string;
+  description?: string;
+  category: string;
+  dueDate?: string;
+}) => request<TodoItem>('/todos', { method: 'POST', body: JSON.stringify(data) });
+
+export const getTodos = (category?: string, status?: string) => {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (status) params.set('status', status);
+  const qs = params.toString();
+  return request<TodoItem[]>(`/todos${qs ? `?${qs}` : ''}`);
+};
+
+export const getTodosByDate = (date: string) =>
+  request<TodoItem[]>(`/todos/date/${date}`);
+
+export const updateTodo = (id: string, data: {
+  title?: string;
+  description?: string;
+  category?: string;
+  status?: string;
+  dueDate?: string;
+}) => request<TodoItem>(`/todos/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteTodo = (id: string) =>
+  request<void>(`/todos/${id}`, { method: 'DELETE' });
 
 // Dashboard
 export const getDashboard = () => request<Dashboard>('/dashboard');

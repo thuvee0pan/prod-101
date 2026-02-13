@@ -74,6 +74,18 @@ export interface Dashboard {
   score: ExecutionScore;
 }
 
+export interface TodoItem {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  status: string;
+  dueDate: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ProjectChangeResponse {
   id: string;
   proposedProjectTitle: string;

@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<InactivityWarning> InactivityWarnings => Set<InactivityWarning>();
     public DbSet<WeeklyReview> WeeklyReviews => Set<WeeklyReview>();
     public DbSet<ProjectChangeRequest> ProjectChangeRequests => Set<ProjectChangeRequest>();
+    public DbSet<TodoItem> TodoItems => Set<TodoItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -101,6 +102,19 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.ReplaceProjectId)
                   .OnDelete(DeleteBehavior.SetNull);
+            entity.Property(e => e.Status)
+                  .HasConversion<string>();
+        });
+
+        modelBuilder.Entity<TodoItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.User)
+                  .WithMany(u => u.TodoItems)
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.Category)
+                  .HasConversion<string>();
             entity.Property(e => e.Status)
                   .HasConversion<string>();
         });

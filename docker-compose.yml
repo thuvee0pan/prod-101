@@ -12,11 +12,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/ExecutionOS.API/Migrations/001_InitialSchema.sql:/docker-entrypoint-initdb.d/001_init.sql
+      - ./backend/ExecutionOS.API/Migrations/002_AddTodos.sql:/docker-entrypoint-initdb.d/002_todos.sql
 
   api:
     build: ./backend/ExecutionOS.API
     ports:
-      - "5000:5000"
+      - "5001:5000"
     depends_on:
       - db
     environment:
