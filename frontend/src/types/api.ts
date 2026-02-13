@@ -86,6 +86,14 @@ export interface TodoItem {
   updatedAt: string;
 }
 
+export interface AuthUser {
+  token: string;
+  userId: string;
+  email: string;
+  name: string;
+  profilePicture: string | null;
+}
+
 export interface ProjectChangeResponse {
   id: string;
   proposedProjectTitle: string;

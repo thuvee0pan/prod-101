@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Sidebar } from '@/components/Sidebar';
+import { AuthProvider } from '@/lib/auth';
+import { AuthGuard } from '@/components/AuthGuard';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 export const metadata: Metadata = {
   title: 'Execution OS',
@@ -11,10 +13,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="font-mono">
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="flex-1 p-6 ml-56">{children}</main>
-        </div>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+          <AuthProvider>
+            <AuthGuard>{children}</AuthGuard>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

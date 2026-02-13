@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using ExecutionOS.API.DTOs;
 using ExecutionOS.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExecutionOS.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/daily-logs")]
 public class DailyLogsController : ControllerBase
@@ -17,7 +20,7 @@ public class DailyLogsController : ControllerBase
         _streakService = streakService;
     }
 
-    private Guid GetUserId() => Guid.Parse(Request.Headers["X-User-Id"].FirstOrDefault() ?? Guid.Empty.ToString());
+    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpPost]
     public async Task<ActionResult<DailyLogResponse>> LogToday([FromBody] CreateDailyLogRequest request)

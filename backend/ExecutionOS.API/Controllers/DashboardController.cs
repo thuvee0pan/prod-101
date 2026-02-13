@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using ExecutionOS.API.DTOs;
 using ExecutionOS.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExecutionOS.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class DashboardController : ControllerBase
@@ -31,7 +34,7 @@ public class DashboardController : ControllerBase
         _logService = logService;
     }
 
-    private Guid GetUserId() => Guid.Parse(Request.Headers["X-User-Id"].FirstOrDefault() ?? Guid.Empty.ToString());
+    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
     public async Task<ActionResult<DashboardResponse>> Get()

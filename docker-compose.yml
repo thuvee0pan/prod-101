@@ -13,6 +13,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./backend/ExecutionOS.API/Migrations/001_InitialSchema.sql:/docker-entrypoint-initdb.d/001_init.sql
       - ./backend/ExecutionOS.API/Migrations/002_AddTodos.sql:/docker-entrypoint-initdb.d/002_todos.sql
+      - ./backend/ExecutionOS.API/Migrations/003_AddGoogleAuth.sql:/docker-entrypoint-initdb.d/003_auth.sql
 
   api:
     build: ./backend/ExecutionOS.API
@@ -24,6 +25,10 @@ services:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=execution_os;Username=postgres;Password=postgres
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:5000
+      - Auth__GoogleClientId=${GOOGLE_CLIENT_ID:-}
+      - Auth__JwtSecret=${JWT_SECRET:-dev-secret-key-change-in-production-min-32-chars!!}
+      - Auth__JwtIssuer=ExecutionOS
+      - Auth__JwtAudience=ExecutionOS
 
   frontend:
     build: ./frontend
@@ -31,6 +36,8 @@ services:
       - "3000:3000"
     depends_on:
       - api
+    environment:
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
 
 volumes:
   pgdata:

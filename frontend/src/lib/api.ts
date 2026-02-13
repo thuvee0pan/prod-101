@@ -12,18 +12,38 @@ import type {
 
 const API_BASE = '/api';
 
-// Temporary: hardcoded user ID for MVP. Replace with auth.
-const USER_ID = '00000000-0000-0000-0000-000000000001';
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem('auth');
+    if (!stored) return null;
+    return JSON.parse(stored).token;
+  } catch {
+    return null;
+  }
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options?.headers as Record<string, string>,
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Id': USER_ID,
-      ...options?.headers,
-    },
+    headers,
   });
+
+  if (res.status === 401) {
+    localStorage.removeItem('auth');
+    window.location.href = '/sign-in';
+    throw new Error('Session expired. Please sign in again.');
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
