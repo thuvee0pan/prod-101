@@ -17,7 +17,8 @@ public class DailyLogsController : ControllerBase
         _streakService = streakService;
     }
 
-    private Guid GetUserId() => Guid.Parse(Request.Headers["X-User-Id"].FirstOrDefault() ?? Guid.Empty.ToString());
+    private Guid GetUserId() =>
+        Guid.TryParse(Request.Headers["X-User-Id"].FirstOrDefault(), out var id) ? id : Guid.Empty;
 
     [HttpPost]
     public async Task<ActionResult<DailyLogResponse>> LogToday([FromBody] CreateDailyLogRequest request)
