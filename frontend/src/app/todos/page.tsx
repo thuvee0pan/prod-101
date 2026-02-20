@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { TodoItem } from '@/types/api';
-import { getTodosByDate, createTodo, updateTodo, deleteTodo } from '@/lib/api';
+import { getTodos, getTodosByDate, createTodo, updateTodo, deleteTodo } from '@/lib/api';
 
 const CATEGORIES = ['Work', 'Personal', 'Gym', 'Learning', 'Health', 'Finance', 'Social', 'Other'];
 
@@ -24,6 +24,7 @@ function todayStr() {
 export default function TodosPage() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [selectedDate, setSelectedDate] = useState(todayStr());
+  const [viewMode, setViewMode] = useState<'date' | 'all'>('date');
   const [filterCategory, setFilterCategory] = useState<string>('All');
   const [error, setError] = useState<string | null>(null);
 
@@ -40,14 +41,14 @@ export default function TodosPage() {
 
   const load = async () => {
     try {
-      const data = await getTodosByDate(selectedDate);
+      const data = viewMode === 'all' ? await getTodos() : await getTodosByDate(selectedDate);
       setTodos(data);
     } catch (e: any) {
       setError(e.message);
     }
   };
 
-  useEffect(() => { load(); }, [selectedDate]);
+  useEffect(() => { load(); }, [selectedDate, viewMode]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,9 +97,12 @@ export default function TodosPage() {
   };
 
   const navigateDay = (offset: number) => {
-    const d = new Date(selectedDate + 'T00:00:00');
-    d.setDate(d.getDate() + offset);
-    setSelectedDate(d.toISOString().split('T')[0]);
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const date = new Date(y, m - 1, d + offset);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    setSelectedDate(`${yyyy}-${mm}-${dd}`);
   };
 
   const isToday = selectedDate === todayStr();
@@ -116,29 +120,53 @@ export default function TodosPage() {
   return (
     <div className="max-w-2xl">
       <h1 className="text-2xl font-bold mb-1">Todos</h1>
-      <p className="text-muted text-sm mb-6">Plan your day. Execute. Check off.</p>
+      <p className="text-muted text-sm mb-4">Plan your day. Execute. Check off.</p>
+
+      {/* View mode toggle */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setViewMode('date')}
+          className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${viewMode === 'date'
+            ? 'bg-accent/20 text-accent border-accent/30'
+            : 'text-muted border-border hover:border-muted'
+            }`}
+        >
+          📅 By Date
+        </button>
+        <button
+          onClick={() => setViewMode('all')}
+          className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${viewMode === 'all'
+            ? 'bg-accent/20 text-accent border-accent/30'
+            : 'text-muted border-border hover:border-muted'
+            }`}
+        >
+          📋 All Todos
+        </button>
+      </div>
 
       {error && <p className="text-danger text-sm mb-4">{error}</p>}
 
-      {/* Date navigation */}
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigateDay(-1)} className="text-muted hover:text-white px-2 py-1 rounded hover:bg-border/50 transition-colors">&larr;</button>
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="input w-auto bg-transparent border-none text-white text-center cursor-pointer"
-          />
-          {isToday && <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded">TODAY</span>}
+      {/* Date navigation — only in date mode */}
+      {viewMode === 'date' && (
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => navigateDay(-1)} className="text-muted hover:text-white px-2 py-1 rounded hover:bg-border/50 transition-colors">&larr;</button>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="input w-auto bg-transparent border-none text-white text-center cursor-pointer"
+            />
+            {isToday && <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded">TODAY</span>}
+          </div>
+          <button onClick={() => navigateDay(1)} className="text-muted hover:text-white px-2 py-1 rounded hover:bg-border/50 transition-colors">&rarr;</button>
+          {!isToday && (
+            <button onClick={() => setSelectedDate(todayStr())} className="text-xs text-accent hover:underline ml-2">
+              Go to today
+            </button>
+          )}
         </div>
-        <button onClick={() => navigateDay(1)} className="text-muted hover:text-white px-2 py-1 rounded hover:bg-border/50 transition-colors">&rarr;</button>
-        {!isToday && (
-          <button onClick={() => setSelectedDate(todayStr())} className="text-xs text-accent hover:underline ml-2">
-            Go to today
-          </button>
-        )}
-      </div>
+      )}
 
       {/* Progress bar */}
       {totalCount > 0 && (
@@ -199,11 +227,10 @@ export default function TodosPage() {
           <button
             key={c}
             onClick={() => setFilterCategory(c)}
-            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-              filterCategory === c
-                ? 'bg-accent/20 text-accent border-accent/30'
-                : 'text-muted border-border hover:border-muted'
-            }`}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${filterCategory === c
+              ? 'bg-accent/20 text-accent border-accent/30'
+              : 'text-muted border-border hover:border-muted'
+              }`}
           >
             {c}
           </button>
@@ -256,11 +283,16 @@ export default function TodosPage() {
                     className="mt-1 w-5 h-5 rounded border-2 border-muted hover:border-accent flex-shrink-0 transition-colors"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm text-white">{todo.title}</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded border ${CATEGORY_COLORS[todo.category] || CATEGORY_COLORS.Other}`}>
                         {todo.category}
                       </span>
+                      {viewMode === 'all' && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-border/50 text-muted">
+                          {todo.dueDate}
+                        </span>
+                      )}
                     </div>
                     {todo.description && (
                       <p className="text-xs text-muted mt-0.5">{todo.description}</p>
@@ -303,11 +335,16 @@ export default function TodosPage() {
                   </svg>
                 </button>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm text-muted line-through">{todo.title}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded border ${CATEGORY_COLORS[todo.category] || CATEGORY_COLORS.Other}`}>
                       {todo.category}
                     </span>
+                    {viewMode === 'all' && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-border/50 text-muted">
+                        {todo.dueDate}
+                      </span>
+                    )}
                   </div>
                   {todo.description && (
                     <p className="text-xs text-muted mt-0.5 line-through">{todo.description}</p>

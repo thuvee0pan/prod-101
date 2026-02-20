@@ -11,9 +11,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./backend/ExecutionOS.API/Migrations/001_InitialSchema.sql:/docker-entrypoint-initdb.d/001_init.sql
-      - ./backend/ExecutionOS.API/Migrations/002_AddTodos.sql:/docker-entrypoint-initdb.d/002_todos.sql
-      - ./backend/ExecutionOS.API/Migrations/003_AddGoogleAuth.sql:/docker-entrypoint-initdb.d/003_auth.sql
 
   api:
     build: ./backend/ExecutionOS.API
@@ -38,6 +35,7 @@ services:
       - api
     environment:
       - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - API_URL=http://api:5000
 
 volumes:
   pgdata:
