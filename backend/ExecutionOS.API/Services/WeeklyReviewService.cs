@@ -19,7 +19,9 @@ public class WeeklyReviewService
     public async Task<WeeklyReviewResponse> Generate(Guid userId)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var weekStart = today.AddDays(-(int)today.DayOfWeek + 1); // Monday
+        // DayOfWeek: Sunday=0 .. Saturday=6. We need Monday as start.
+        var daysFromMonday = ((int)today.DayOfWeek + 6) % 7; // Monday=0, Sunday=6
+        var weekStart = today.AddDays(-daysFromMonday);
         var weekEnd = weekStart.AddDays(6); // Sunday
 
         // Gather data

@@ -34,7 +34,7 @@ public class DashboardController : ControllerBase
         _logService = logService;
     }
 
-    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private Guid GetUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
     [HttpGet]
     public async Task<ActionResult<DashboardResponse>> Get()
@@ -49,8 +49,10 @@ public class DashboardController : ControllerBase
         var todayLog = await _logService.GetToday(userId);
 
         // Calculate this week's execution score
-        var weekStart = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-(int)DateTime.UtcNow.DayOfWeek + 1));
-        var weekEnd = DateOnly.FromDateTime(DateTime.UtcNow);
+        var now = DateTime.UtcNow;
+        var daysFromMonday = ((int)now.DayOfWeek + 6) % 7;
+        var weekStart = DateOnly.FromDateTime(now.AddDays(-daysFromMonday));
+        var weekEnd = DateOnly.FromDateTime(now);
         var weekLogs = await _logService.GetLogs(userId, weekStart, weekEnd);
 
         var score = new ExecutionScore(

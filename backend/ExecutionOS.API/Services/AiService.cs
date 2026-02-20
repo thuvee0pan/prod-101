@@ -92,15 +92,25 @@ public class AiService
         var response = await client.PostAsync("https://api.openai.com/v1/chat/completions", content);
         var responseBody = await response.Content.ReadAsStringAsync();
 
-        using var doc = JsonDocument.Parse(responseBody);
-        return doc.RootElement
-            .GetProperty("choices")[0]
-            .GetProperty("message")
-            .GetProperty("content")
-            .GetString() ?? string.Empty;
+        if (!response.IsSuccessStatusCode)
+            return $"[AI error: HTTP {(int)response.StatusCode} - {responseBody}]";
+
+        try
+        {
+            using var doc = JsonDocument.Parse(responseBody);
+            return doc.RootElement
+                .GetProperty("choices")[0]
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString() ?? string.Empty;
+        }
+        catch (Exception ex) when (ex is JsonException or KeyNotFoundException or IndexOutOfRangeException or InvalidOperationException)
+        {
+            return $"[AI error: unexpected response format - {ex.Message}]";
+        }
     }
 
-    private static WeeklyReviewAiResult ParseWeeklyReview(string response)
+    internal static WeeklyReviewAiResult ParseWeeklyReview(string response)
     {
         var sections = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         var whatWorked = new List<string>();
@@ -110,10 +120,11 @@ public class AiService
         var currentSection = 0;
         foreach (var line in sections)
         {
-            var lower = line.ToLower();
-            if (lower.Contains("what worked")) { currentSection = 1; continue; }
-            if (lower.Contains("avoided") || lower.Contains("where i")) { currentSection = 2; continue; }
-            if (lower.Contains("what to cut") || lower.Contains("cut")) { currentSection = 3; continue; }
+            var trimmed = line.TrimStart('#', '*', ' ', '-', '\t', '0', '1', '2', '3', '.');
+            var lower = trimmed.ToLower();
+            if (lower.StartsWith("what worked")) { currentSection = 1; continue; }
+            if (lower.StartsWith("where") && (lower.Contains("avoided") || lower.Contains("hard work"))) { currentSection = 2; continue; }
+            if (lower.StartsWith("what to cut")) { currentSection = 3; continue; }
 
             var cleaned = line.TrimStart('-', '*', ' ', '\t');
             if (string.IsNullOrWhiteSpace(cleaned)) continue;

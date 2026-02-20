@@ -15,7 +15,7 @@ public class WeeklyReviewsController : ControllerBase
 
     public WeeklyReviewsController(WeeklyReviewService reviewService) => _reviewService = reviewService;
 
-    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private Guid GetUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
     [HttpPost("generate")]
     public async Task<ActionResult<WeeklyReviewResponse>> Generate()

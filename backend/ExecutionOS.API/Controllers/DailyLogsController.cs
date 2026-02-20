@@ -20,7 +20,7 @@ public class DailyLogsController : ControllerBase
         _streakService = streakService;
     }
 
-    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private Guid GetUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
     [HttpPost]
     public async Task<ActionResult<DailyLogResponse>> LogToday([FromBody] CreateDailyLogRequest request)

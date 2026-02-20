@@ -15,7 +15,7 @@ public class GoalsController : ControllerBase
 
     public GoalsController(GoalService goalService) => _goalService = goalService;
 
-    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private Guid GetUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
     [HttpPost]
     public async Task<ActionResult<GoalResponse>> Create([FromBody] CreateGoalRequest request)

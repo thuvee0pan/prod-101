@@ -15,7 +15,7 @@ public class WarningsController : ControllerBase
 
     public WarningsController(WarningService warningService) => _warningService = warningService;
 
-    private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private Guid GetUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
     [HttpGet]
     public async Task<ActionResult<List<WarningResponse>>> GetActive()
