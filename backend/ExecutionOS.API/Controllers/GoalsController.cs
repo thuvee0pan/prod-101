@@ -13,7 +13,8 @@ public class GoalsController : ControllerBase
     public GoalsController(GoalService goalService) => _goalService = goalService;
 
     // TODO: Replace with actual auth user ID extraction
-    private Guid GetUserId() => Guid.Parse(Request.Headers["X-User-Id"].FirstOrDefault() ?? Guid.Empty.ToString());
+    private Guid GetUserId() =>
+        Guid.TryParse(Request.Headers["X-User-Id"].FirstOrDefault(), out var id) ? id : Guid.Empty;
 
     [HttpPost]
     public async Task<ActionResult<GoalResponse>> Create([FromBody] CreateGoalRequest request)

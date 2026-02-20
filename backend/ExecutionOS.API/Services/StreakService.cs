@@ -71,6 +71,11 @@ public class StreakService
         {
             streak.CurrentCount = 0;
         }
+        else if (streak.LastLoggedDate == logDate)
+        {
+            // Same-day re-log: streak already counted, no change needed
+            return;
+        }
         else
         {
             var yesterday = logDate.AddDays(-1);

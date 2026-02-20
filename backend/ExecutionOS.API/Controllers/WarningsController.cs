@@ -12,7 +12,8 @@ public class WarningsController : ControllerBase
 
     public WarningsController(WarningService warningService) => _warningService = warningService;
 
-    private Guid GetUserId() => Guid.Parse(Request.Headers["X-User-Id"].FirstOrDefault() ?? Guid.Empty.ToString());
+    private Guid GetUserId() =>
+        Guid.TryParse(Request.Headers["X-User-Id"].FirstOrDefault(), out var id) ? id : Guid.Empty;
 
     [HttpGet]
     public async Task<ActionResult<List<WarningResponse>>> GetActive()
