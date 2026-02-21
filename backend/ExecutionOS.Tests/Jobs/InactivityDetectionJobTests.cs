@@ -2,9 +2,11 @@ using ExecutionOS.API.Data;
 using ExecutionOS.API.Jobs;
 using ExecutionOS.API.Models;
 using ExecutionOS.API.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace ExecutionOS.Tests.Jobs;
 
@@ -14,18 +16,31 @@ public class InactivityDetectionJobTests
 
     private (InactivityDetectionJob job, AppDbContext db) CreateJob()
     {
-        var db = TestDbHelper.CreateInMemoryDb();
+        // Use a shared database name so all contexts see the same data
+        var dbName = Guid.NewGuid().ToString();
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(databaseName: dbName)
+            .Options;
+
+        // This context is used for seeding data and asserting results
+        var testDb = new AppDbContext(options);
+        testDb.Database.EnsureCreated();
 
         var services = new ServiceCollection();
-        services.AddSingleton(db);
-        services.AddScoped<AppDbContext>(_ => db);
+        // Register a factory so each scope gets a fresh context (same DB)
+        services.AddScoped(_ =>
+        {
+            var ctx = new AppDbContext(options);
+            ctx.Database.EnsureCreated();
+            return ctx;
+        });
         services.AddScoped<WarningService>();
         var serviceProvider = services.BuildServiceProvider();
 
         var logger = new Mock<ILogger<InactivityDetectionJob>>();
         var job = new InactivityDetectionJob(serviceProvider, logger.Object);
 
-        return (job, db);
+        return (job, testDb);
     }
 
     [Fact]

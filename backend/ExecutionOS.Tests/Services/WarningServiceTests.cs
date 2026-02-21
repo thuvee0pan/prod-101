@@ -1,4 +1,5 @@
 using ExecutionOS.API.Services;
+using Xunit;
 
 namespace ExecutionOS.Tests.Services;
 
@@ -68,7 +69,8 @@ public class WarningServiceTests
         await service.CreateWarning(_userId, "stale_project", "Warning 2");
 
         var all = await service.GetActiveWarnings(_userId);
-        await service.AcknowledgeWarning(_userId, all[0].Id);
+        var noDailyLogWarning = all.First(w => w.WarningType == "no_daily_log");
+        await service.AcknowledgeWarning(_userId, noDailyLogWarning.Id);
 
         var remaining = await service.GetActiveWarnings(_userId);
         Assert.Single(remaining);

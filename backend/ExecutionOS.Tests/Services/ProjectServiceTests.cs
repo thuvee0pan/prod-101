@@ -3,6 +3,7 @@ using ExecutionOS.API.Models;
 using ExecutionOS.API.Services;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using Xunit;
 
 namespace ExecutionOS.Tests.Services;
 
