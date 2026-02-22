@@ -9,11 +9,13 @@ public class WeeklyReviewService
 {
     private readonly AppDbContext _db;
     private readonly AiService _ai;
+    private readonly ILogger<WeeklyReviewService> _logger;
 
-    public WeeklyReviewService(AppDbContext db, AiService ai)
+    public WeeklyReviewService(AppDbContext db, AiService ai, ILogger<WeeklyReviewService> logger)
     {
         _db = db;
         _ai = ai;
+        _logger = logger;
     }
 
     public async Task<WeeklyReviewResponse> Generate(Guid userId)
@@ -78,6 +80,9 @@ public class WeeklyReviewService
 
         _db.WeeklyReviews.Add(review);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Weekly review generated — Week: {WeekStart} to {WeekEnd}, User: {UserId}",
+            weekStart, weekEnd, userId.ToString()[..8]);
 
         return MapToResponse(review);
     }

@@ -1,6 +1,7 @@
 using ExecutionOS.API.Models;
 using ExecutionOS.API.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -14,14 +15,14 @@ public class WeeklyReviewServiceTests
     {
         var config = new Mock<IConfiguration>();
         config.Setup(c => c["AiSettings:ApiKey"]).Returns((string?)null);
-        return new AiService(config.Object);
+        return new AiService(config.Object, NullLogger<AiService>.Instance);
     }
 
     [Fact]
     public async Task Generate_PersistsReview()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WeeklyReviewService(db, CreateMockAiService());
+        var service = new WeeklyReviewService(db, CreateMockAiService(), NullLogger<WeeklyReviewService>.Instance);
 
         // Seed a user goal
         db.Goals.Add(new Goal
@@ -45,7 +46,7 @@ public class WeeklyReviewServiceTests
     public async Task Generate_WeekStartIsAlwaysMonday()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WeeklyReviewService(db, CreateMockAiService());
+        var service = new WeeklyReviewService(db, CreateMockAiService(), NullLogger<WeeklyReviewService>.Instance);
 
         var result = await service.Generate(_userId);
 
@@ -59,7 +60,7 @@ public class WeeklyReviewServiceTests
     public async Task Generate_NoGoal_UsesPlaceholder()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WeeklyReviewService(db, CreateMockAiService());
+        var service = new WeeklyReviewService(db, CreateMockAiService(), NullLogger<WeeklyReviewService>.Instance);
 
         // No goal seeded — AI context should contain "No active goal"
         var result = await service.Generate(_userId);
@@ -71,7 +72,7 @@ public class WeeklyReviewServiceTests
     public async Task GetAll_OrderedByMostRecent()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WeeklyReviewService(db, CreateMockAiService());
+        var service = new WeeklyReviewService(db, CreateMockAiService(), NullLogger<WeeklyReviewService>.Instance);
 
         await service.Generate(_userId);
         await service.Generate(_userId);
@@ -86,7 +87,7 @@ public class WeeklyReviewServiceTests
     public async Task GetLatest_NoReviews_ReturnsNull()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WeeklyReviewService(db, CreateMockAiService());
+        var service = new WeeklyReviewService(db, CreateMockAiService(), NullLogger<WeeklyReviewService>.Instance);
 
         var result = await service.GetLatest(_userId);
 
@@ -97,7 +98,7 @@ public class WeeklyReviewServiceTests
     public async Task GetLatest_ReturnsNewest()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WeeklyReviewService(db, CreateMockAiService());
+        var service = new WeeklyReviewService(db, CreateMockAiService(), NullLogger<WeeklyReviewService>.Instance);
 
         await service.Generate(_userId);
         var latest = await service.Generate(_userId);
@@ -112,8 +113,8 @@ public class WeeklyReviewServiceTests
     {
         var db = TestDbHelper.CreateInMemoryDb();
         var aiService = CreateMockAiService();
-        var streakService = new StreakService(db);
-        var service = new WeeklyReviewService(db, aiService);
+        var streakService = new StreakService(db, NullLogger<StreakService>.Instance);
+        var service = new WeeklyReviewService(db, aiService, NullLogger<WeeklyReviewService>.Instance);
 
         // Seed streak data
         db.Streaks.Add(new Streak

@@ -9,11 +9,13 @@ public class DailyLogService
 {
     private readonly AppDbContext _db;
     private readonly StreakService _streaks;
+    private readonly ILogger<DailyLogService> _logger;
 
-    public DailyLogService(AppDbContext db, StreakService streaks)
+    public DailyLogService(AppDbContext db, StreakService streaks, ILogger<DailyLogService> logger)
     {
         _db = db;
         _streaks = streaks;
+        _logger = logger;
     }
 
     public async Task<DailyLogResponse> LogToday(Guid userId, CreateDailyLogRequest request)
@@ -48,6 +50,10 @@ public class DailyLogService
         }
 
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Daily log {Action} — Date: {LogDate}, User: {UserId}",
+            existing.CreatedAt == existing.UpdatedAt ? "created" : "updated",
+            today, userId.ToString()[..8]);
 
         await _streaks.UpdateStreaks(userId, existing);
 

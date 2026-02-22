@@ -14,11 +14,13 @@ public class AuthService
 {
     private readonly AppDbContext _db;
     private readonly IConfiguration _config;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(AppDbContext db, IConfiguration config)
+    public AuthService(AppDbContext db, IConfiguration config, ILogger<AuthService> logger)
     {
         _db = db;
         _config = config;
+        _logger = logger;
     }
 
     public async Task<AuthResponse> GoogleLogin(string idToken)
@@ -36,6 +38,7 @@ public class AuthService
         }
         catch (InvalidJwtException)
         {
+            _logger.LogWarning("Google login failed — invalid token provided");
             throw new InvalidOperationException("Invalid Google token.");
         }
 
@@ -53,6 +56,7 @@ public class AuthService
                 user.ProfilePicture = payload.Picture;
                 user.Name = payload.Name ?? user.Name;
                 user.UpdatedAt = DateTime.UtcNow;
+                _logger.LogInformation("Google account linked to existing user {UserId}", user.Id.ToString()[..8]);
             }
             else
             {
@@ -65,6 +69,7 @@ public class AuthService
                     ProfilePicture = payload.Picture
                 };
                 _db.Users.Add(user);
+                _logger.LogInformation("New user registered via Google OAuth — UserId: {UserId}", user.Id.ToString()[..8]);
             }
 
             await _db.SaveChangesAsync();
@@ -79,6 +84,7 @@ public class AuthService
         }
 
         var token = GenerateJwt(user);
+        _logger.LogInformation("User {UserId} authenticated successfully", user.Id.ToString()[..8]);
 
         return new AuthResponse(
             token,

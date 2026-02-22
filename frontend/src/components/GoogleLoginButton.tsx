@@ -1,6 +1,7 @@
 import React from 'react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import { useAuth } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 interface GoogleLoginButtonProps {
     onSuccess?: () => void;
@@ -17,7 +18,9 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ onSuccess,
                 if (onSuccess) onSuccess();
             }
         } catch (error) {
-            console.error('Login Failed', error);
+            logger.error('GoogleLogin', 'Login callback failed', {
+                message: error instanceof Error ? error.message : 'Unknown error',
+            });
             if (onError) onError();
         }
     };
@@ -27,7 +30,7 @@ export const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ onSuccess,
             <GoogleLogin
                 onSuccess={handleSuccess}
                 onError={() => {
-                    console.log('Login Failed');
+                    logger.error('GoogleLogin', 'Google OAuth popup failed');
                     if (onError) onError();
                 }}
                 useOneTap

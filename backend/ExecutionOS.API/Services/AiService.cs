@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -7,8 +8,13 @@ namespace ExecutionOS.API.Services;
 public class AiService
 {
     private readonly IConfiguration _config;
+    private readonly ILogger<AiService> _logger;
 
-    public AiService(IConfiguration config) => _config = config;
+    public AiService(IConfiguration config, ILogger<AiService> logger)
+    {
+        _config = config;
+        _logger = logger;
+    }
 
     public async Task<WeeklyReviewAiResult> GenerateWeeklyReview(WeeklyReviewContext context)
     {
@@ -69,7 +75,12 @@ public class AiService
         var model = _config["AiSettings:Model"] ?? "gpt-4";
 
         if (string.IsNullOrEmpty(apiKey))
+        {
+            _logger.LogWarning("AI call skipped — API key not configured");
             return "[AI not configured - set AiSettings:ApiKey in appsettings.json]";
+        }
+
+        var stopwatch = Stopwatch.StartNew();
 
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
@@ -93,16 +104,27 @@ public class AiService
         var responseBody = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
+        {
+            stopwatch.Stop();
+            _logger.LogError("AI call failed — Model: {Model}, Status: {StatusCode}, Duration: {Duration}ms",
+                model, (int)response.StatusCode, stopwatch.ElapsedMilliseconds);
             return $"[AI error: HTTP {(int)response.StatusCode} - {responseBody}]";
+        }
 
         try
         {
             using var doc = JsonDocument.Parse(responseBody);
-            return doc.RootElement
+            var result = doc.RootElement
                 .GetProperty("choices")[0]
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString() ?? string.Empty;
+
+            stopwatch.Stop();
+            _logger.LogInformation("AI call succeeded — Model: {Model}, Duration: {Duration}ms",
+                model, stopwatch.ElapsedMilliseconds);
+
+            return result;
         }
         catch (Exception ex) when (ex is JsonException or KeyNotFoundException or IndexOutOfRangeException or InvalidOperationException)
         {

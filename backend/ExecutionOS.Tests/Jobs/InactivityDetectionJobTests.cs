@@ -34,6 +34,7 @@ public class InactivityDetectionJobTests
             ctx.Database.EnsureCreated();
             return ctx;
         });
+        services.AddLogging();
         services.AddScoped<WarningService>();
         var serviceProvider = services.BuildServiceProvider();
 

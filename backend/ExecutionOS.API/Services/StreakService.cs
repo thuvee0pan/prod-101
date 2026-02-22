@@ -8,8 +8,13 @@ namespace ExecutionOS.API.Services;
 public class StreakService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<StreakService> _logger;
 
-    public StreakService(AppDbContext db) => _db = db;
+    public StreakService(AppDbContext db, ILogger<StreakService> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     public async Task UpdateStreaks(Guid userId, DailyLog log)
     {
@@ -69,6 +74,9 @@ public class StreakService
 
         if (!achieved)
         {
+            if (streak.CurrentCount > 0)
+                _logger.LogInformation("Streak broken — Type: {StreakType}, Was: {Count} days, User: {UserId}",
+                    type, streak.CurrentCount, userId.ToString()[..8]);
             streak.CurrentCount = 0;
         }
         else if (streak.LastLoggedDate == logDate)
@@ -84,7 +92,11 @@ public class StreakService
                 : 1;
 
             if (streak.CurrentCount > streak.LongestCount)
+            {
                 streak.LongestCount = streak.CurrentCount;
+                _logger.LogInformation("New streak record — Type: {StreakType}, Count: {Count}, User: {UserId}",
+                    type, streak.CurrentCount, userId.ToString()[..8]);
+            }
         }
 
         streak.LastLoggedDate = logDate;

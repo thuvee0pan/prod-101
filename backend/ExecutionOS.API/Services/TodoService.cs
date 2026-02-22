@@ -8,8 +8,13 @@ namespace ExecutionOS.API.Services;
 public class TodoService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<TodoService> _logger;
 
-    public TodoService(AppDbContext db) => _db = db;
+    public TodoService(AppDbContext db, ILogger<TodoService> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     public async Task<TodoResponse> Create(Guid userId, CreateTodoRequest request)
     {
@@ -36,6 +41,9 @@ public class TodoService
 
         _db.TodoItems.Add(todo);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Todo created — TodoId: {TodoId}, Date: {DueDate}, User: {UserId}",
+            todo.Id.ToString()[..8], dueDate, userId.ToString()[..8]);
 
         return MapToResponse(todo);
     }
@@ -94,6 +102,9 @@ public class TodoService
         todo.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
+        _logger.LogInformation("Todo updated — TodoId: {TodoId}, User: {UserId}",
+            todoId.ToString()[..8], userId.ToString()[..8]);
+
         return MapToResponse(todo);
     }
 
@@ -105,6 +116,9 @@ public class TodoService
 
         _db.TodoItems.Remove(todo);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Todo deleted — TodoId: {TodoId}, User: {UserId}",
+            todoId.ToString()[..8], userId.ToString()[..8]);
     }
 
     private static TodoResponse MapToResponse(TodoItem t) =>

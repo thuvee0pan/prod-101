@@ -1,4 +1,5 @@
 using ExecutionOS.API.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExecutionOS.Tests.Services;
@@ -11,7 +12,7 @@ public class WarningServiceTests
     public async Task CreateWarning_AddsToDb()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WarningService(db);
+        var service = new WarningService(db, NullLogger<WarningService>.Instance);
 
         await service.CreateWarning(_userId, "no_daily_log", "You haven't logged in 7 days.");
 
@@ -25,7 +26,7 @@ public class WarningServiceTests
     public async Task AcknowledgeWarning_MarksAcknowledged()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WarningService(db);
+        var service = new WarningService(db, NullLogger<WarningService>.Instance);
 
         await service.CreateWarning(_userId, "no_daily_log", "Log your day.");
         var warnings = await service.GetActiveWarnings(_userId);
@@ -40,7 +41,7 @@ public class WarningServiceTests
     public async Task AcknowledgeWarning_WrongUser_Throws()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WarningService(db);
+        var service = new WarningService(db, NullLogger<WarningService>.Instance);
 
         await service.CreateWarning(_userId, "no_daily_log", "Log your day.");
         var warnings = await service.GetActiveWarnings(_userId);
@@ -53,7 +54,7 @@ public class WarningServiceTests
     public async Task AcknowledgeWarning_NonExistent_Throws()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WarningService(db);
+        var service = new WarningService(db, NullLogger<WarningService>.Instance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.AcknowledgeWarning(_userId, Guid.NewGuid()));
@@ -63,7 +64,7 @@ public class WarningServiceTests
     public async Task GetActiveWarnings_ExcludesAcknowledged()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WarningService(db);
+        var service = new WarningService(db, NullLogger<WarningService>.Instance);
 
         await service.CreateWarning(_userId, "no_daily_log", "Warning 1");
         await service.CreateWarning(_userId, "stale_project", "Warning 2");
@@ -81,7 +82,7 @@ public class WarningServiceTests
     public async Task GetActiveWarnings_DifferentUsers_Isolated()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new WarningService(db);
+        var service = new WarningService(db, NullLogger<WarningService>.Instance);
         var userId2 = Guid.NewGuid();
 
         await service.CreateWarning(_userId, "no_daily_log", "User 1 warning");

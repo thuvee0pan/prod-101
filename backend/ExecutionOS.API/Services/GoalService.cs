@@ -8,8 +8,13 @@ namespace ExecutionOS.API.Services;
 public class GoalService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<GoalService> _logger;
 
-    public GoalService(AppDbContext db) => _db = db;
+    public GoalService(AppDbContext db, ILogger<GoalService> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     public async Task<GoalResponse> CreateGoal(Guid userId, CreateGoalRequest request)
     {
@@ -31,6 +36,9 @@ public class GoalService
 
         _db.Goals.Add(goal);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Goal created — GoalId: {GoalId}, User: {UserId}",
+            goal.Id.ToString()[..8], userId.ToString()[..8]);
 
         return MapToResponse(goal);
     }
@@ -63,6 +71,9 @@ public class GoalService
         goal.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
+        _logger.LogInformation("Goal completed — GoalId: {GoalId}, User: {UserId}",
+            goalId.ToString()[..8], userId.ToString()[..8]);
+
         return MapToResponse(goal);
     }
 
@@ -76,6 +87,9 @@ public class GoalService
         goal.AbandonReason = request.Reason;
         goal.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Goal abandoned — GoalId: {GoalId}, User: {UserId}",
+            goalId.ToString()[..8], userId.ToString()[..8]);
 
         return MapToResponse(goal);
     }

@@ -9,6 +9,7 @@ import type {
   ProjectChangeResponse,
   TodoItem,
 } from '@/types/api';
+import { logger } from '@/lib/logger';
 
 const API_BASE = '/api';
 
@@ -40,6 +41,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (res.status === 401) {
+    logger.warn('API', 'Session expired — redirecting to sign-in', { path });
     localStorage.removeItem('auth');
     window.location.href = '/sign-in';
     throw new Error('Session expired. Please sign in again.');
@@ -47,8 +49,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    logger.error('API', `Request failed`, { method: options?.method ?? 'GET', path, status: res.status });
     throw new Error(body.error || `Request failed: ${res.status}`);
   }
+
+  logger.debug('API', `${options?.method ?? 'GET'} ${path} → ${res.status}`);
 
   if (res.status === 204) return undefined as T;
   return res.json();

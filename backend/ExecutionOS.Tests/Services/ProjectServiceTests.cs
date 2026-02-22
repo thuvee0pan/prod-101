@@ -2,6 +2,7 @@ using ExecutionOS.API.DTOs;
 using ExecutionOS.API.Models;
 using ExecutionOS.API.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -16,14 +17,14 @@ public class ProjectServiceTests
         var config = new Mock<IConfiguration>();
         // No API key means AI returns fallback string
         config.Setup(c => c["AiSettings:ApiKey"]).Returns((string?)null);
-        return new AiService(config.Object);
+        return new AiService(config.Object, NullLogger<AiService>.Instance);
     }
 
     [Fact]
     public async Task CreateProject_FirstProject_Succeeds()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         var result = await service.CreateProject(_userId,
             new CreateProjectRequest("My App", "A cool app", null));
@@ -36,7 +37,7 @@ public class ProjectServiceTests
     public async Task CreateProject_TwoProjects_Succeeds()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         await service.CreateProject(_userId, new CreateProjectRequest("App 1", "First", null));
         var second = await service.CreateProject(_userId, new CreateProjectRequest("App 2", "Second", null));
@@ -48,7 +49,7 @@ public class ProjectServiceTests
     public async Task CreateProject_ThirdProject_ThrowsMaxActiveLimit()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         await service.CreateProject(_userId, new CreateProjectRequest("App 1", "First", null));
         await service.CreateProject(_userId, new CreateProjectRequest("App 2", "Second", null));
@@ -63,7 +64,7 @@ public class ProjectServiceTests
     public async Task CreateProject_AfterDropping_AllowsNew()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         var p1 = await service.CreateProject(_userId, new CreateProjectRequest("App 1", "First", null));
         await service.CreateProject(_userId, new CreateProjectRequest("App 2", "Second", null));
@@ -77,7 +78,7 @@ public class ProjectServiceTests
     public async Task UpdateStatus_ValidStatus_Updates()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         var project = await service.CreateProject(_userId, new CreateProjectRequest("App", "Desc", null));
         var updated = await service.UpdateStatus(_userId, project.Id, new UpdateProjectStatusRequest("Paused"));
@@ -89,7 +90,7 @@ public class ProjectServiceTests
     public async Task UpdateStatus_InvalidStatus_Throws()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         var project = await service.CreateProject(_userId, new CreateProjectRequest("App", "Desc", null));
 
@@ -101,7 +102,7 @@ public class ProjectServiceTests
     public async Task UpdateStatus_NonExistentProject_Throws()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.UpdateStatus(_userId, Guid.NewGuid(), new UpdateProjectStatusRequest("Paused")));
@@ -111,7 +112,7 @@ public class ProjectServiceTests
     public async Task SubmitChangeRequest_ShortJustification_Throws()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         var project = await service.CreateProject(_userId, new CreateProjectRequest("App", "Desc", null));
 
@@ -126,7 +127,7 @@ public class ProjectServiceTests
     public async Task SubmitChangeRequest_ValidJustification_Succeeds()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         var project = await service.CreateProject(_userId, new CreateProjectRequest("App", "Desc", null));
         var justification = "This is a well-thought-out justification that exceeds fifty characters in length for the project change.";
@@ -142,7 +143,7 @@ public class ProjectServiceTests
     public async Task ApproveChangeRequest_DropsOldAndCreatesNew()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         var oldProject = await service.CreateProject(_userId, new CreateProjectRequest("Old App", "Old", null));
         var justification = "This is a well-thought-out justification that exceeds fifty characters in length for the project change.";
@@ -165,7 +166,7 @@ public class ProjectServiceTests
     public async Task GetActiveProjects_FiltersCorrectly()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new ProjectService(db, CreateMockAiService());
+        var service = new ProjectService(db, CreateMockAiService(), NullLogger<ProjectService>.Instance);
 
         var p1 = await service.CreateProject(_userId, new CreateProjectRequest("Active 1", "Desc", null));
         await service.CreateProject(_userId, new CreateProjectRequest("Active 2", "Desc", null));
