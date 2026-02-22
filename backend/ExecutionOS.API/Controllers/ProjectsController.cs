@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using ExecutionOS.API.DTOs;
 using ExecutionOS.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExecutionOS.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ProjectsController : ControllerBase
@@ -12,8 +15,7 @@ public class ProjectsController : ControllerBase
 
     public ProjectsController(ProjectService projectService) => _projectService = projectService;
 
-    private Guid GetUserId() =>
-        Guid.TryParse(Request.Headers["X-User-Id"].FirstOrDefault(), out var id) ? id : Guid.Empty;
+    private Guid GetUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
     [HttpPost]
     public async Task<ActionResult<ProjectResponse>> Create([FromBody] CreateProjectRequest request)

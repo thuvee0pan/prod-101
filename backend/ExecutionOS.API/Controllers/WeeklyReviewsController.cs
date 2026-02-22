@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using ExecutionOS.API.DTOs;
 using ExecutionOS.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExecutionOS.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/weekly-reviews")]
 public class WeeklyReviewsController : ControllerBase
@@ -12,8 +15,7 @@ public class WeeklyReviewsController : ControllerBase
 
     public WeeklyReviewsController(WeeklyReviewService reviewService) => _reviewService = reviewService;
 
-    private Guid GetUserId() =>
-        Guid.TryParse(Request.Headers["X-User-Id"].FirstOrDefault(), out var id) ? id : Guid.Empty;
+    private Guid GetUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
     [HttpPost("generate")]
     public async Task<ActionResult<WeeklyReviewResponse>> Generate()

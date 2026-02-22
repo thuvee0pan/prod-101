@@ -1,5 +1,7 @@
 using ExecutionOS.API.DTOs;
 using ExecutionOS.API.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace ExecutionOS.Tests.Services;
 
@@ -11,8 +13,8 @@ public class DailyLogServiceTests
     public async Task LogToday_FirstLog_CreatesNew()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var streakService = new StreakService(db);
-        var service = new DailyLogService(db, streakService);
+        var streakService = new StreakService(db, NullLogger<StreakService>.Instance);
+        var service = new DailyLogService(db, streakService, NullLogger<DailyLogService>.Instance);
 
         var result = await service.LogToday(_userId, new CreateDailyLogRequest(
             120, true, 30, true, "Productive day"));
@@ -28,8 +30,8 @@ public class DailyLogServiceTests
     public async Task LogToday_SecondLog_UpdatesExisting()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var streakService = new StreakService(db);
-        var service = new DailyLogService(db, streakService);
+        var streakService = new StreakService(db, NullLogger<StreakService>.Instance);
+        var service = new DailyLogService(db, streakService, NullLogger<DailyLogService>.Instance);
 
         var first = await service.LogToday(_userId, new CreateDailyLogRequest(
             60, false, 15, true, "Morning log"));
@@ -48,8 +50,8 @@ public class DailyLogServiceTests
     public async Task GetToday_NoLog_ReturnsNull()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var streakService = new StreakService(db);
-        var service = new DailyLogService(db, streakService);
+        var streakService = new StreakService(db, NullLogger<StreakService>.Instance);
+        var service = new DailyLogService(db, streakService, NullLogger<DailyLogService>.Instance);
 
         var result = await service.GetToday(_userId);
 
@@ -60,8 +62,8 @@ public class DailyLogServiceTests
     public async Task GetToday_AfterLogging_ReturnsLog()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var streakService = new StreakService(db);
-        var service = new DailyLogService(db, streakService);
+        var streakService = new StreakService(db, NullLogger<StreakService>.Instance);
+        var service = new DailyLogService(db, streakService, NullLogger<DailyLogService>.Instance);
 
         await service.LogToday(_userId, new CreateDailyLogRequest(120, true, 30, true, null));
         var result = await service.GetToday(_userId);
@@ -74,8 +76,8 @@ public class DailyLogServiceTests
     public async Task GetLogs_DateRange_FiltersCorrectly()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var streakService = new StreakService(db);
-        var service = new DailyLogService(db, streakService);
+        var streakService = new StreakService(db, NullLogger<StreakService>.Instance);
+        var service = new DailyLogService(db, streakService, NullLogger<DailyLogService>.Instance);
 
         // Create logs by directly adding to DB (to control dates)
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -117,8 +119,8 @@ public class DailyLogServiceTests
     public async Task LogToday_TriggersStreakUpdate()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var streakService = new StreakService(db);
-        var service = new DailyLogService(db, streakService);
+        var streakService = new StreakService(db, NullLogger<StreakService>.Instance);
+        var service = new DailyLogService(db, streakService, NullLogger<DailyLogService>.Instance);
 
         await service.LogToday(_userId, new CreateDailyLogRequest(120, true, 30, true, null));
 
@@ -131,8 +133,8 @@ public class DailyLogServiceTests
     public async Task GetLogs_DifferentUsers_Isolated()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var streakService = new StreakService(db);
-        var service = new DailyLogService(db, streakService);
+        var streakService = new StreakService(db, NullLogger<StreakService>.Instance);
+        var service = new DailyLogService(db, streakService, NullLogger<DailyLogService>.Instance);
         var userId2 = Guid.NewGuid();
 
         await service.LogToday(_userId, new CreateDailyLogRequest(120, true, 30, true, null));

@@ -1,5 +1,7 @@
 using ExecutionOS.API.Models;
 using ExecutionOS.API.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace ExecutionOS.Tests.Services;
 
@@ -11,7 +13,7 @@ public class StreakServiceTests
     public async Task UpdateStreaks_FirstLog_CreatesStreakWithCount1()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new StreakService(db);
+        var service = new StreakService(db, NullLogger<StreakService>.Instance);
         var log = CreateLog(deepWork: 120, gym: true, learning: 30, sober: true,
             date: new DateOnly(2024, 6, 10));
 
@@ -25,7 +27,7 @@ public class StreakServiceTests
     public async Task UpdateStreaks_ConsecutiveDays_IncrementsStreak()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new StreakService(db);
+        var service = new StreakService(db, NullLogger<StreakService>.Instance);
 
         var day1 = CreateLog(deepWork: 120, gym: true, learning: 30, sober: true,
             date: new DateOnly(2024, 6, 10));
@@ -43,7 +45,7 @@ public class StreakServiceTests
     public async Task UpdateStreaks_MissedDay_ResetsStreakTo1()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new StreakService(db);
+        var service = new StreakService(db, NullLogger<StreakService>.Instance);
 
         var day1 = CreateLog(deepWork: 120, gym: true, learning: 30, sober: true,
             date: new DateOnly(2024, 6, 10));
@@ -62,7 +64,7 @@ public class StreakServiceTests
     public async Task UpdateStreaks_NotAchieved_ResetsToZero()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new StreakService(db);
+        var service = new StreakService(db, NullLogger<StreakService>.Instance);
 
         var day1 = CreateLog(deepWork: 120, gym: true, learning: 30, sober: true,
             date: new DateOnly(2024, 6, 10));
@@ -80,7 +82,7 @@ public class StreakServiceTests
     public async Task UpdateStreaks_SameDayReLog_DoesNotDoubleIncrement()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new StreakService(db);
+        var service = new StreakService(db, NullLogger<StreakService>.Instance);
 
         var day1 = CreateLog(deepWork: 120, gym: true, learning: 30, sober: true,
             date: new DateOnly(2024, 6, 10));
@@ -103,7 +105,7 @@ public class StreakServiceTests
     public async Task UpdateStreaks_LongestCountTracked()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new StreakService(db);
+        var service = new StreakService(db, NullLogger<StreakService>.Instance);
 
         // Build a 3-day streak
         for (int i = 0; i < 3; i++)
@@ -135,7 +137,7 @@ public class StreakServiceTests
     public async Task UpdateStreaks_PartialAchievement_OnlyAffectsRelevantStreaks()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new StreakService(db);
+        var service = new StreakService(db, NullLogger<StreakService>.Instance);
 
         // Day 1: all achieved
         var day1 = CreateLog(deepWork: 120, gym: true, learning: 30, sober: true,
@@ -159,7 +161,7 @@ public class StreakServiceTests
     public async Task GetStreaks_NoData_ReturnsAllTypesWithZeroCounts()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new StreakService(db);
+        var service = new StreakService(db, NullLogger<StreakService>.Instance);
 
         var streaks = await service.GetStreaks(_userId);
 

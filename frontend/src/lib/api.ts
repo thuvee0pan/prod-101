@@ -7,27 +7,53 @@ import type {
   Warning,
   WeeklyReview,
   ProjectChangeResponse,
+  TodoItem,
 } from '@/types/api';
+import { logger } from '@/lib/logger';
 
 const API_BASE = '/api';
 
-// Temporary: hardcoded user ID for MVP. Replace with auth.
-const USER_ID = '00000000-0000-0000-0000-000000000001';
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem('auth');
+    if (!stored) return null;
+    return JSON.parse(stored).token;
+  } catch {
+    return null;
+  }
+}
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options?.headers as Record<string, string>,
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Id': USER_ID,
-      ...options?.headers,
-    },
+    headers,
   });
+
+  if (res.status === 401) {
+    logger.warn('API', 'Session expired — redirecting to sign-in', { path });
+    localStorage.removeItem('auth');
+    window.location.href = '/sign-in';
+    throw new Error('Session expired. Please sign in again.');
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    logger.error('API', `Request failed`, { method: options?.method ?? 'GET', path, status: res.status });
     throw new Error(body.error || `Request failed: ${res.status}`);
   }
+
+  logger.debug('API', `${options?.method ?? 'GET'} ${path} → ${res.status}`);
 
   if (res.status === 204) return undefined as T;
   return res.json();
@@ -122,6 +148,36 @@ export const generateWeeklyReview = () =>
 export const getAllReviews = () => request<WeeklyReview[]>('/weekly-reviews');
 
 export const getLatestReview = () => request<WeeklyReview>('/weekly-reviews/latest');
+
+// Todos
+export const createTodo = (data: {
+  title: string;
+  description?: string;
+  category: string;
+  dueDate?: string;
+}) => request<TodoItem>('/todos', { method: 'POST', body: JSON.stringify(data) });
+
+export const getTodos = (category?: string, status?: string) => {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (status) params.set('status', status);
+  const qs = params.toString();
+  return request<TodoItem[]>(`/todos${qs ? `?${qs}` : ''}`);
+};
+
+export const getTodosByDate = (date: string) =>
+  request<TodoItem[]>(`/todos/date/${date}`);
+
+export const updateTodo = (id: string, data: {
+  title?: string;
+  description?: string;
+  category?: string;
+  status?: string;
+  dueDate?: string;
+}) => request<TodoItem>(`/todos/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+
+export const deleteTodo = (id: string) =>
+  request<void>(`/todos/${id}`, { method: 'DELETE' });
 
 // Dashboard
 export const getDashboard = () => request<Dashboard>('/dashboard');

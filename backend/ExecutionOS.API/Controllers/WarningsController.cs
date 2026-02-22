@@ -1,9 +1,12 @@
+using System.Security.Claims;
 using ExecutionOS.API.DTOs;
 using ExecutionOS.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExecutionOS.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class WarningsController : ControllerBase
@@ -12,8 +15,7 @@ public class WarningsController : ControllerBase
 
     public WarningsController(WarningService warningService) => _warningService = warningService;
 
-    private Guid GetUserId() =>
-        Guid.TryParse(Request.Headers["X-User-Id"].FirstOrDefault(), out var id) ? id : Guid.Empty;
+    private Guid GetUserId() => Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
 
     [HttpGet]
     public async Task<ActionResult<List<WarningResponse>>> GetActive()

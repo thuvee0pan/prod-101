@@ -29,8 +29,9 @@ export default function DashboardPage() {
         <p className="text-muted mb-6">Connect the backend to see your data.</p>
         <div className="card">
           <p className="text-danger text-sm">{error}</p>
+          {/* TODO: Remove this in Production */}
           <p className="text-muted text-sm mt-2">
-            Make sure the .NET API is running on localhost:5000
+            Make sure the .NET API is running on {process.env.API_URL}
           </p>
         </div>
       </div>

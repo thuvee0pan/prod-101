@@ -8,8 +8,13 @@ namespace ExecutionOS.API.Services;
 public class WarningService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<WarningService> _logger;
 
-    public WarningService(AppDbContext db) => _db = db;
+    public WarningService(AppDbContext db, ILogger<WarningService> logger)
+    {
+        _db = db;
+        _logger = logger;
+    }
 
     public async Task<List<WarningResponse>> GetActiveWarnings(Guid userId)
     {
@@ -32,6 +37,9 @@ public class WarningService
         warning.Acknowledged = true;
         warning.AcknowledgedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Warning acknowledged — WarningId: {WarningId}, User: {UserId}",
+            warningId.ToString()[..8], userId.ToString()[..8]);
     }
 
     public async Task CreateWarning(Guid userId, string warningType, string message)
@@ -45,5 +53,8 @@ public class WarningService
 
         _db.InactivityWarnings.Add(warning);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Warning created — Type: {WarningType}, User: {UserId}",
+            warningType, userId.ToString()[..8]);
     }
 }

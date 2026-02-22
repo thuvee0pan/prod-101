@@ -2,17 +2,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
 
 const nav = [
   { href: '/', label: 'Dashboard' },
   { href: '/goals', label: 'Goal' },
   { href: '/projects', label: 'Projects' },
+  { href: '/todos', label: 'Todos' },
   { href: '/daily-log', label: 'Daily Log' },
   { href: '/weekly-review', label: 'Weekly Review' },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-56 bg-surface border-r border-border flex flex-col">
@@ -39,7 +42,33 @@ export function Sidebar() {
         })}
       </nav>
       <div className="p-4 border-t border-border">
-        <p className="text-xs text-muted">v0.1.0 MVP</p>
+        {user && (
+          <div className="flex items-center gap-2 mb-3">
+            {user.profilePicture ? (
+              <img
+                src={user.profilePicture}
+                alt={user.name}
+                className="w-7 h-7 rounded-full"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center text-xs text-accent font-bold">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-white truncate">{user.name}</p>
+              <p className="text-[10px] text-muted truncate">{user.email}</p>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={logout}
+          className="text-xs text-muted hover:text-danger transition-colors w-full text-left"
+        >
+          Sign out
+        </button>
+        <p className="text-xs text-muted mt-2">v0.1.0 MVP</p>
       </div>
     </aside>
   );

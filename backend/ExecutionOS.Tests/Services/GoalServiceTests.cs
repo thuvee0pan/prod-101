@@ -1,6 +1,8 @@
 using ExecutionOS.API.DTOs;
 using ExecutionOS.API.Models;
 using ExecutionOS.API.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
 
 namespace ExecutionOS.Tests.Services;
 
@@ -12,7 +14,7 @@ public class GoalServiceTests
     public async Task CreateGoal_FirstGoal_Succeeds()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
 
         var result = await service.CreateGoal(_userId, new CreateGoalRequest("Ship MVP", "Launch in 90 days"));
 
@@ -25,7 +27,7 @@ public class GoalServiceTests
     public async Task CreateGoal_AlreadyHasActiveGoal_Throws()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
 
         await service.CreateGoal(_userId, new CreateGoalRequest("Goal 1", "First"));
 
@@ -39,7 +41,7 @@ public class GoalServiceTests
     public async Task CreateGoal_AfterCompleting_AllowsNew()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
 
         var goal1 = await service.CreateGoal(_userId, new CreateGoalRequest("Goal 1", "First"));
         await service.CompleteGoal(_userId, goal1.Id);
@@ -54,7 +56,7 @@ public class GoalServiceTests
     public async Task CompleteGoal_SetsStatusToCompleted()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
 
         var goal = await service.CreateGoal(_userId, new CreateGoalRequest("My Goal", "Description"));
         var completed = await service.CompleteGoal(_userId, goal.Id);
@@ -66,7 +68,7 @@ public class GoalServiceTests
     public async Task CompleteGoal_NonExistent_Throws()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => service.CompleteGoal(_userId, Guid.NewGuid()));
@@ -76,7 +78,7 @@ public class GoalServiceTests
     public async Task AbandonGoal_SetsStatusAndReason()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
 
         var goal = await service.CreateGoal(_userId, new CreateGoalRequest("My Goal", "Description"));
         var abandoned = await service.AbandonGoal(_userId, goal.Id, new AbandonGoalRequest("Changed direction"));
@@ -88,7 +90,7 @@ public class GoalServiceTests
     public async Task GetActiveGoal_NoGoals_ReturnsNull()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
 
         var result = await service.GetActiveGoal(_userId);
 
@@ -99,7 +101,7 @@ public class GoalServiceTests
     public async Task GetAllGoals_ReturnsAllStatuses()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
 
         var goal1 = await service.CreateGoal(_userId, new CreateGoalRequest("Goal 1", "First"));
         await service.AbandonGoal(_userId, goal1.Id, new AbandonGoalRequest("Bad idea"));
@@ -114,7 +116,7 @@ public class GoalServiceTests
     public async Task GetActiveGoal_DifferentUsers_Isolated()
     {
         var db = TestDbHelper.CreateInMemoryDb();
-        var service = new GoalService(db);
+        var service = new GoalService(db, NullLogger<GoalService>.Instance);
         var userId2 = Guid.NewGuid();
 
         await service.CreateGoal(_userId, new CreateGoalRequest("User1 Goal", "First"));

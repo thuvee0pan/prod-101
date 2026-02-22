@@ -9,12 +9,14 @@ public class ProjectService
 {
     private readonly AppDbContext _db;
     private readonly AiService _ai;
+    private readonly ILogger<ProjectService> _logger;
     private const int MaxActiveProjects = 2;
 
-    public ProjectService(AppDbContext db, AiService ai)
+    public ProjectService(AppDbContext db, AiService ai, ILogger<ProjectService> logger)
     {
         _db = db;
         _ai = ai;
+        _logger = logger;
     }
 
     public async Task<ProjectResponse> CreateProject(Guid userId, CreateProjectRequest request)
@@ -37,6 +39,9 @@ public class ProjectService
 
         _db.Projects.Add(project);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Project created — ProjectId: {ProjectId}, User: {UserId}",
+            project.Id.ToString()[..8], userId.ToString()[..8]);
 
         return MapToResponse(project);
     }
@@ -73,6 +78,9 @@ public class ProjectService
         project.Status = status;
         project.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Project status updated — ProjectId: {ProjectId}, Status: {Status}, User: {UserId}",
+            projectId.ToString()[..8], status, userId.ToString()[..8]);
 
         return MapToResponse(project);
     }
@@ -146,6 +154,9 @@ public class ProjectService
 
         _db.Projects.Add(newProject);
         await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Change request {RequestId} approved — new ProjectId: {ProjectId}, User: {UserId}",
+            requestId.ToString()[..8], newProject.Id.ToString()[..8], userId.ToString()[..8]);
 
         return MapToResponse(newProject);
     }
